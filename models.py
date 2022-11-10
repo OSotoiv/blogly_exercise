@@ -24,7 +24,9 @@ class User(db.Model):
                            nullable=False)
     last_name = db.Column(db.String(),
                           nullable=False)
+
     image_url = db.Column(db.String())
 
+    @property
     def full_name(self):
         return f'{self.first_name} {self.last_name}'
