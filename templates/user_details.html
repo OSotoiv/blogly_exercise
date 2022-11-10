@@ -11,12 +11,16 @@
 {% endwith %}
 
 <div class="card" style="width: 18rem;">
-    <img src="user.image_url" class="card-img-top" alt="...">
+    <img src="{{user.image_url}}" class="card-img-top" alt="...">
     <div class="card-body">
         <h5 class="card-title">{{user.first_name}} {{user.last_name}}</h5>
-        <p class="card-text">Some quick example text to build on the card title and make up the bulk of the card's
-            content.</p>
-        <a href="/user/{{user.id}}/edit" class="btn btn-primary">Edit</a>
+        <ul>
+            {% for post in posts%}
+            <li><a href="/posts/{{post.id}}">{{post.title}}</a></li>
+            {% endfor%}
+        </ul>
+        <a href="/users/{{user.id}}/post/new" class="btn btn-primary">Add Post</a>
+        <a href="/user/{{user.id}}/edit" class="btn btn-secondary">Edit</a>
         <a href="/user/{{user.id}}/delete" class="btn btn-danger">Delete</a>
     </div>
 </div>
