@@ -18,6 +18,7 @@ class User(db.Model):
         first_name={self.first_name}
         last_name={self.last_name}
         image_url={self.image_url}>"""
+
     id = db.Column(db.Integer,
                    primary_key=True,
                    autoincrement=True)
@@ -36,10 +37,12 @@ class User(db.Model):
 
 
 class Post(db.Model):
+
     __tablename__ = 'post'
 
     def __repr__(self):
-        return f"<Post id=self.id"
+        return f"< Post >"
+
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     title = db.Column(db.String(), nullable=False)
     content = db.Column(db.String(), nullable=False)

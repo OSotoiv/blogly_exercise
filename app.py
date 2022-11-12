@@ -79,12 +79,12 @@ def delete_user(id):
 
 
 @app.route('/users/<int:id>/post/new')
-def post_form(id):
+def new_post_form(id):
     return render_template('new_post.html', id=id)
 
 
 @app.route('/users/<int:id>/post/new', methods=['POST'])
-def submit_post(id):
+def submit_new_post(id):
     data = request.form
     post = Post(title=data.get('title'),
                 content=data.get('content'),
@@ -95,14 +95,14 @@ def submit_post(id):
 
 
 @app.route('/posts/<int:post_id>')
-def show_post(post_id):
+def show_post_details(post_id):
     post = Post.query.get(post_id)
     user = post.user
     return render_template('post_details.html', post=post, user=user)
 
 
 @app.route('/posts/<int:post_id>/edit')
-def edit_post(post_id):
+def edit_post_form(post_id):
     post = Post.query.get(post_id)
     return render_template('post_edit.html', post=post)
 
