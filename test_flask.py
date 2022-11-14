@@ -35,6 +35,8 @@ class App_Routes_Test(TestCase):
 
     def setUp(self):
         self.users = User.query.all()
+        self.users_tup = db.session.query(
+            User.id, User.first_name, User.last_name, User.image_url).all()
 
     def testDown(self):
         db.session.rollback()
@@ -101,56 +103,80 @@ class App_Routes_Test(TestCase):
                 # self.assertIn(f'value="{user.image_url}" name="img_url"', html)
                 self.assertIn('name="img_url"', html)
 
-# -----------------------------------------------------------------------------------------------------------------------
     def test_submit_edit_user(self):
         with app.test_client() as client:
-            for user in self.users:
-                first_name = user.first_name
-                last_name = user.last_name
-                image_url = user.image_url
+            for id, first_name, last_name, image_url in self.users_tup:
                 d = {'first_name': first_name+'_edit',
                      'last_name': last_name+'_edit',
                      'img_url': None}
                 res = client.post(
-                    f'/user/{user.id}/edit', data=d, follow_redirects=True)
+                    f'/user/{id}/edit', data=d, follow_redirects=True)
                 html = res.get_data(as_text=True)
                 self.assertEqual(res.status_code, 200)
 
     def test_delete_user(self):
         with app.test_client() as client:
-            res = client.get('/')
+            first_user = User.query.first()
+            res = client.get(
+                f'/user/{first_user.id}/delete', follow_redirects=True)
             html = res.get_data(as_text=True)
             self.assertEqual(res.status_code, 200)
+            self.assertNotIn(first_user.first_name, html)
+            self.assertNotIn(f'href="/user/{first_user.id}"', html)
+            self.assertNotIn(first_user, User.query.all())
 
     def test_new_post_form(self):
         with app.test_client() as client:
-            res = client.get('/')
-            html = res.get_data(as_text=True)
-            self.assertEqual(res.status_code, 200)
+            for user in self.users:
+                res = client.get(f'/users/{user.id}/post/new')
+                html = res.get_data(as_text=True)
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(
+                    f'action="/users/{user.id}/post/new" method="POST"', html)
+                self.assertIn(
+                    '<input type="text" class="form-control" id="title" name="title">', html)
+                self.assertIn(
+                    '<textarea style="height: 100px" class="form-control" id="content" name="content">', html)
 
     def test_submit_new_post(self):
         with app.test_client() as client:
-            res = client.get('/')
-            html = res.get_data(as_text=True)
-            self.assertEqual(res.status_code, 200)
+            for id, first_name, last_name, img in self.users_tup:
+                d = {'title': 'this is a test',
+                     'content': f'hi my name is {first_name} {last_name}',
+                     'user_id': id}
+                res = client.post(
+                    f'/users/{id}/post/new', data=d, follow_redirects=True)
+                html = res.get_data(as_text=True)
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(f'{first_name} {last_name}', html)
+                self.assertIn(d['title'], html)
 
     def test_show_post_details(self):
         with app.test_client() as client:
-            res = client.get('/')
-            html = res.get_data(as_text=True)
-            self.assertEqual(res.status_code, 200)
+            for user in self.users:
+                for post in user.posts:
+                    res = client.get(f'/posts/{post.id}')
+                    html = res.get_data(as_text=True)
+                    self.assertEqual(res.status_code, 200)
+                    self.assertIn(post.title, html)
+                    self.assertIn(post.content, html)
+                    self.assertIn(f'by: {user.first_name}', html)
 
     def test_edit_post_form(self):
         with app.test_client() as client:
-            res = client.get('/')
-            html = res.get_data(as_text=True)
-            self.assertEqual(res.status_code, 200)
+            for user in self.users:
+                for post in user.posts:
+                    res = client.get(f'/posts/{post.id}/edit')
+                    html = res.get_data(as_text=True)
+                    self.assertEqual(res.status_code, 'failed!!!!!!!!')
 
     def test_submit_edit_post(self):
         with app.test_client() as client:
-            res = client.get('/')
-            html = res.get_data(as_text=True)
-            self.assertEqual(res.status_code, 200)
+            for user in self.users:
+                for post in user.posts:
+                    res = client.get('/')
+                    html = res.get_data(as_text=True)
+                    self.assertEqual(res.status_code, 200)
 
     def test_delete_post(self):
         with app.test_client() as client:
