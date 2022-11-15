@@ -5,7 +5,7 @@ from flask_debugtoolbar import DebugToolbarExtension
 from models import db, connect_db, User, Post
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql:///blogly_test2'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ECHO'] = True
 app.config['SECRET_KEY'] = 'thehouseisyellow'
@@ -73,6 +73,8 @@ def submit_edit_user(id):
 
 @app.route('/user/<int:id>/delete')
 def delete_user(id):
+    Post.query.filter_by(user_id=id).delete()
+    db.session.commit()
     User.query.filter(User.id == id).delete()
     db.session.commit()
     return redirect('/')
@@ -120,7 +122,7 @@ def submit_edit_post(post_id):
 @app.route('/posts/<int:post_id>/delete')
 def delete_post(post_id):
     post = Post.query.get(post_id)
-    user = post.user
+    id = post.user_id
     Post.query.filter(Post.id == post_id).delete()
     db.session.commit()
-    return redirect(f'/user/{user.id}')
+    return redirect(f'/user/{id}')
