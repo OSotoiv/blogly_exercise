@@ -96,7 +96,7 @@ def submit_new_post(id):
                 tags=tags)
     db.session.add(post)
     db.session.commit()
-    return redirect(f'/user/{id}')
+    return redirect(f'/posts/{post.id}')
 
 
 @app.route('/posts/<int:post_id>')

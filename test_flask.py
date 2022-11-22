@@ -1,5 +1,5 @@
 from unittest import TestCase
-from models import db, User, Post
+from models import db, User, Post, PostTag, Tag
 from datetime import datetime
 from app import app
 
@@ -17,6 +17,9 @@ db.create_all()
 class App_Routes_Test(TestCase):
 
     def setUp(self):
+
+        PostTag.query.delete()
+        Tag.query.delete()
         Post.query.delete()
         User.query.delete()
         # seed db with users
@@ -28,16 +31,38 @@ class App_Routes_Test(TestCase):
                     image_url='https://images.unsplash.com/photo-1667802694056-3dd951aba710?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=687&q=80')
         db.session.add_all([mickey, donald, walt])
         db.session.commit()
+
+        fun = Tag(id='fun', name='Funny')
+        news = Tag(id='news', name='BreakingNews')
+        world = Tag(id='WNews', name='WorldNews')
+        health = Tag(id='gut', name='GutHealth')
+
+        db.session.add_all([fun, news, world, health])
+        db.session.commit()
+
         mpost = Post(title='testing 123',
-                     content=f'hi my name is {mickey.first_name}', user_id=mickey.id)
+                     content=f'hi my name is {mickey.first_name}', user_id=mickey.id, tags=[health, fun])
         dpost = Post(title='testing 123',
-                     content=f'hi my name is {donald.first_name}', user_id=donald.id)
+                     content=f'hi my name is {donald.first_name}', user_id=donald.id, tags=[fun, news])
         wpost = Post(title='testing 123',
-                     content=f'hi my name is {walt.first_name}', user_id=walt.id)
+                     content=f'hi my name is {walt.first_name}', user_id=walt.id, tags=[news, world])
         db.session.add_all([mpost, dpost, wpost])
         db.session.commit()
+
+        # for tag in [health, fun]:
+        #     mpost.tags.append(tag)
+        # for tag in [fun, news]:
+        #     dpost.tags.append(tag)
+        # for tag in [news, world]:
+        #     wpost.tags.append(tag)
+        # db.session.add_all([mpost, dpost, wpost])
+        # db.session.commit()
+
         self.user_post = db.session.query(
             User.id, User.first_name, User.last_name, Post.id, Post.title, Post.content).join(Post).all()
+        self.tags = db.session.query(Tag.id, Tag.name).all()
+        self.post_tags = db.session.query(
+            PostTag.post_id, PostTag.tag_id).all()
 
     def tearDown(self):
         db.session.rollback()
@@ -132,6 +157,9 @@ class App_Routes_Test(TestCase):
                 self.assertEqual(res.status_code, 200)
                 self.assertNotIn(first, html)
                 self.assertNotIn(f'href="/user/{userid}"', html)
+                self.assertFalse(Post.query.filter(
+                    Post.user_id == userid).all())
+                self.assertFalse(Post.query.filter(Post.id == postid).all())
 
     def test_new_post_form(self):
         """test getting new post html form"""
@@ -146,6 +174,9 @@ class App_Routes_Test(TestCase):
                     '<input type="text" class="form-control" id="title" name="title">', html)
                 self.assertIn(
                     '<textarea style="height: 100px" class="form-control" id="content" name="content">', html)
+                for id, name in self.tags:
+                    self.assertIn(name, html)
+                    self.assertIn(id, html)
 
     def test_submit_new_post(self):
         """testing submitting a new post form"""
@@ -153,12 +184,17 @@ class App_Routes_Test(TestCase):
             for userid, first, last, postid, title, content in self.user_post:
                 d = {'title': 'this is a test',
                      'content': 'This post is new!',
-                     'user_id': userid}
+                     'user_id': userid,
+                     'tags': ['news', 'gut']}
                 res = client.post(
                     f'/users/{userid}/post/new', data=d, follow_redirects=True)
                 html = res.get_data(as_text=True)
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(d['title'], html)
+                for tag in d['tags']:
+                    self.assertIn(tag, html)
+                for tag in ['WNews', 'fun']:
+                    self.assertNotIn(tag, html)
 
     def test_show_post_details(self):
         """test for showin post details page"""
@@ -178,7 +214,8 @@ class App_Routes_Test(TestCase):
                 html = res.get_data(as_text=True)
                 self.assertEqual(res.status_code, 200)
                 self.assertIn(f'name="title" value="{title}', html)
-                self.assertIn(f'name="content" value="{content}', html)
+                self.assertIn('name="content"', html)
+                self.assertIn(content, html)
                 self.assertIn(f'action="/posts/{postid}/edit"', html)
 
     def test_submit_edit_post(self):
@@ -206,3 +243,68 @@ class App_Routes_Test(TestCase):
                     f'/posts/{postid}/delete', follow_redirects=True)
                 html = res.get_data(as_text=True)
                 self.assertEqual(res.status_code, 200)
+
+    def test_show_all_tags(self):
+        with app.test_client() as client:
+            res = client.get('/tags')
+            html = res.get_data(as_text=True)
+            self.assertEqual(res.status_code, 200)
+            for id, name in self.tags:
+                self.assertIn(id, html)
+                self.assertIn(name, html)
+
+    def test_show_tag_details(self):
+        with app.test_client() as client:
+            for id, name in self.tags:
+                res = client.get(f'/tags/{id}')
+                html = res.get_data(as_text=True)
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(id, html)
+                self.assertIn(name, html)
+
+    def test_new_tag_form(self):
+        with app.test_client() as client:
+            res = client.get('/tags/new')
+            html = res.get_data(as_text=True)
+            self.assertEqual(res.status_code, 200)
+
+    def test_make_new_tags(self):
+        with app.test_client() as client:
+            new_tag = {'tag_id': 'test', 'tag_name': 'test tag'}
+            res = client.post('/tags/new',
+                              data=new_tag,
+                              follow_redirects=True)
+            html = res.get_data(as_text=True)
+            self.assertEqual(res.status_code, 200)
+            self.assertIn(new_tag['tag_id'], html)
+            self.assertIn(new_tag['tag_name'], html)
+
+    def test_edit_tag_form(self):
+        with app.test_client() as client:
+            for id, name in self.tags:
+                res = client.get(f'/tags/{id}/edit')
+                html = res.get_data(as_text=True)
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(id, html)
+                self.assertIn(name, html)
+
+    def test_submit_edited_tag(self):
+        with app.test_client() as client:
+            for id, name in self.tags:
+                new_tag = {'tag_id': id, 'tag_name': 'edited'+name}
+                res = client.post(f'/tags/{id}/edit',
+                                  data=new_tag,
+                                  follow_redirects=True)
+                html = res.get_data(as_text=True)
+                self.assertEqual(res.status_code, 200)
+                self.assertIn(id, html)
+                self.assertIn(new_tag['tag_name'], html)
+
+    def test_delete_tag(self):
+        with app.test_client() as client:
+            for id, name in self.tags:
+                res = client.post(f'/tags/{id}/delete', follow_redirects=True)
+                html = res.get_data(as_text=True)
+                self.assertEqual(res.status_code, 200)
+                self.assertNotIn(id, html)
+                self.assertNotIn(name, html)

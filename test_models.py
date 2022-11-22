@@ -47,7 +47,7 @@ class Models_test(TestCase):
         post = Post(title='testing',
                     content='this test should pass',
                     user_id=id,
-                    tags=tag1)
+                    tags=[tag1])
         db.session.add(post)
         db.session.commit()
         cls.post = post
@@ -58,27 +58,27 @@ class Models_test(TestCase):
         # User.query.delete()
         # db.drop_all() this line holds up the test from ending! also holds up the psql db
 
-    def test_users_class(self):
+    def test_users(self):
         """test the creation of a User"""
         self.assertIsInstance(self.user, User)
         self.assertEqual(self.user.full_name, 'Mickey Mouse')
         """user and post relationships are connected"""
         self.assertIn(self.post.id, [self.user.posts[0].id])
 
-    def test_posts_class(self):
+    def test_posts(self):
         """test the creation of a Post"""
         self.assertIsInstance(self.post, Post)
         """user and post relationships are connected"""
         self.assertEqual(self.post.user_id, self.user.id)
 
-    def test_post_tag_class(self):
+    def test_post_tag(self):
         """test the post_tag table for storing ref post_id ref tag_id"""
         post_tag = PostTag.query.all()
         self.assertEqual(len(post_tag), 1)
-        self.assertEqual(post_tag.post_id, 1)
-        self.assertEqual(post_tag.tag_id, 'fun')
+        self.assertEqual(post_tag[0].post_id, 1)
+        self.assertEqual(post_tag[0].tag_id, 'fun')
 
-    def test_tag_class(self):
+    def test_tag(self):
         """test tag tables"""
         all_tags = Tag.query.all()
         first_post = Post.query.first()
