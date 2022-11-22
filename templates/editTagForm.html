@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content%}
+<div class="container">
+    <form class="mb-3" action="/tags/{{tag.id}}/edit" method="POST">
+        <div class="mb-3">
+            <label for="tag_id" class="form-label">Tag ID</label>
+            <input type="text" class="form-control" id="tag_id" value="{{tag.id}}" name="tag_id">
+        </div>
+        <div class="mb-3">
+            <label for="tag_name" class="form-label">Tag Name</label>
+            <input type="text" class="form-control" id="tag_name" value="{{tag.name}}" name="tag_name">
+        </div>
+        <button type="submit" class="btn btn-success">submit</button>
+    </form>
+    <a href="/tags/{{tag.id}}" class="btn btn-danger">Cancel</a>
+</div>
+{%endblock%}

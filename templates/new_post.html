@@ -13,6 +13,14 @@
             <textarea style="height: 100px" class="form-control" id="content" name="content">
             </textarea>
         </div>
+        <div class="container">
+            {% for id,name in tags%}
+            <div class="mb-3 form-check">
+                <input type="checkbox" class="form-check-input" value="{{id}}" id="{{id}}" name="tags">
+                <label class="form-check-label" for="{{id}}">{{name}}</label>
+            </div>
+            {% endfor%}
+        </div>
         <button type="submit" class="btn btn-success">Add</button>
     </form>
 </div>

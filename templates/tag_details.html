@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+{% block content%}
+<div class="container">
+
+    <h1>Showing Post with '{{tag.name}}' Tags!</h1>
+    <a href="/tags/{{tag.id}}/edit"><span class="badge text-bg-primary">Edit Tag</span></a>
+    <form action="/tags/{{tag.id}}/delete" method="POST">
+        <button class="btn btn-danger btn-sm" type="submit">Delete Tag</button>
+    </form>
+
+
+    <h3 class="mt-2">Post</h3>
+    <ul>
+        {% for post in posts%}
+        <li>
+            <a href="/posts/{{post.id}}">{{post.title}}</a>
+        </li>
+        {% endfor%}
+    </ul>
+</div>
+{%endblock%}

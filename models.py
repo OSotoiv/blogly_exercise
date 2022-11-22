@@ -50,6 +50,7 @@ class Post(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'))
 
     user = db.relationship('User')
+    tags = db.relationship('Tag', secondary='post_tag', backref='posts')
 
     @property
     def poster(self):
@@ -58,3 +59,24 @@ class Post(db.Model):
         {self.content}
         {self.created_at}
         {self.user.first_name}""")
+
+
+class PostTag(db.Model):
+    __tablename__ = 'post_tag'
+
+    def __repr__(self):
+        return f'<PostTag {self.post_id} {self.tag_id}'
+
+    post_id = db.Column(db.Integer, db.ForeignKey('post.id'), primary_key=True)
+    tag_id = db.Column(db.String(), db.ForeignKey('tags.id'), primary_key=True)
+
+
+class Tag(db.Model):
+    __tablename__ = 'tags'
+
+    def __repr__(self):
+        return f'<Tag {self.id} {self.name}'
+
+    id = db.Column(db.String(), primary_key=True)
+    name = db.Column(db.String(), unique=True)
+    # has backref to post as posts

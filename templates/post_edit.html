@@ -9,9 +9,15 @@
         </div>
         <div class="mb-3">
             <label for="content" class="form-label">Content</label>
-            <textarea style="height: 100px" class="form-control" id="content" name="content" value="{{post.content}}">
-            </textarea>
+            <textarea style="height: 100px" class="form-control" id="content" name="content">{{post.content}}</textarea>
         </div>
+        {% for id,name in tags%}
+        <div class="mb-3 form-check">
+            <input type="checkbox" class="form-check-input" value="{{id}}" id="{{id}}" name="tags" {% if id in post_tags
+                %} checked {% endif %}>
+            <label class="form-check-label" for="{{id}}">{{name}}</label>
+        </div>
+        {% endfor%}
         <button type="submit" class="btn btn-success">submit edit</button>
     </form>
     <a href="/posts/{{post.id}}" class="btn btn-outline-secondary">Cancel</a>
